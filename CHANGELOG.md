@@ -16,6 +16,15 @@
   - 实现 `GetBatteryLevel()`，使天气/电量查询和 MCP `self.get_device_status` 能读到真实电量。
 - 新增云端构建工作流 `.github/workflows/build-custom.yml`，仅编译 `bread-compact-wifi-s3cam-240x320-dl` 变体，作为本地编译之外的并行产物来源。
 
+## [v2.6.0-s3cam240x320-dl.2] - 2026-11-26
+
+### 修复 / Fixed
+- 修复拍照预览颜色互补/负片感：这块板的 OV 传感器在驱动默认 RGB565 字节交换下颜色反转，新增 Kconfig 选项 `CONFIG_BREAD_COMPACT_WIFI_CAM_CAMERA_FIXES`（默认关闭，仅定制变体开启），在板级调用 `SetSwapBytes(false)` 关闭字节交换，恢复自然色彩。
+- 修复拍照预览过小、不满屏的问题：
+  - 摄像头采集分辨率从官方 `FRAMESIZE_VGA`(640×480) 改回旧版定制固件的 `FRAMESIZE_QVGA`(320×240)，与 240×320 面板比例匹配。
+  - 预览对象由半屏 `width_/2 × height_/2` 改为全屏 `width_ × height_`，并按屏幕 87.5% 等比缩放（`224/256`），整帧可见且接近铺满。
+  - 上述显示层改动同样受 `CONFIG_BREAD_COMPACT_WIFI_CAM_CAMERA_FIXES` 保护，不影响官方默认变体与其它板型。
+
 ### 修改 / Changed
 - `main/boards/bread-compact-wifi-s3cam/compact_wifi_board_s3cam.cc`
   - 在保留官方摄像头、按键、显示初始化的前提下，按编译开关接入电源管理。
