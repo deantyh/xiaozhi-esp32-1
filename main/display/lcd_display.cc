@@ -949,7 +949,12 @@ void LcdDisplay::SetupUI() {
 
     /* Middle layer: preview_image_ - centered display */
     preview_image_ = lv_image_create(screen);
+#if CONFIG_BREAD_COMPACT_WIFI_CAM_CAMERA_FIXES
+    // Full-screen canvas for camera preview on the breadboard S3CAM kit.
+    lv_obj_set_size(preview_image_, width_, height_);
+#else
     lv_obj_set_size(preview_image_, width_ / 2, height_ / 2);
+#endif
     lv_obj_align(preview_image_, LV_ALIGN_CENTER, 0, 0);
     lv_obj_add_flag(preview_image_, LV_OBJ_FLAG_HIDDEN);
 
@@ -1120,8 +1125,18 @@ void LcdDisplay::SetPreviewImage(std::unique_ptr<LvglImage> image) {
     auto img_dsc = preview_image_cached_->image_dsc();
     lv_image_set_src(preview_image_, img_dsc);
     if (img_dsc->header.w > 0 && img_dsc->header.h > 0) {
+#if CONFIG_BREAD_COMPACT_WIFI_CAM_CAMERA_FIXES
+        // Scale to nearly fill the screen while preserving aspect ratio.
+        // LVGL scale: 256 = 100%. Fit the smaller of width/height ratios so
+        // the whole frame stays visible, leaving a thin margin.
+        lv_coord_t zoom_w = (224 * width_) / img_dsc->header.w;   // 87.5% of screen width
+        lv_coord_t zoom_h = (224 * height_) / img_dsc->header.h;  // 87.5% of screen height
+        lv_coord_t zoom = (zoom_w < zoom_h) ? zoom_w : zoom_h;
+        lv_image_set_scale(preview_image_, zoom);
+#else
         // zoom factor 0.5
         lv_image_set_scale(preview_image_, 128 * width_ / img_dsc->header.w);
+#endif
     }
 
     // Hide emoji_box_
