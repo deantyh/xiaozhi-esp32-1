@@ -822,6 +822,15 @@ config BREAD_COMPACT_WIFI_CAM_DISABLE_LCD
         The LCD SPI uses GPIO19/GPIO20, which are the ESP32-S3 USB D-/D+ pins.
         Enable this to run without the LCD so USB-Serial/JTAG stays available.
 
+config BREAD_COMPACT_WIFI_CAM_POWER_MANAGEMENT
+    bool "Enable battery monitor and idle deep sleep (GPIO3 charging / ADC2 battery)"
+    depends on BOARD_TYPE_BREAD_COMPACT_WIFI_CAM
+    default n
+    help
+        Restores the battery level, charging status and automatic deep sleep
+        support used by the battery-powered breadboard ESP32-S3-CAM kit.
+        Keep it disabled when the board is powered from USB continuously.
+
 choice DISPLAY_LCD_TYPE
     depends on BOARD_TYPE_BREAD_COMPACT_WIFI_LCD || BOARD_TYPE_BREAD_COMPACT_ESP32_LCD || BOARD_TYPE_WDMOMO_CGC || BOARD_TYPE_BREAD_COMPACT_WIFI_CAM || (BOARD_TYPE_WK_ESP32S3_DEV && WK_ESP32S3_DEV_DISPLAY_LCD)
     prompt "LCD Type"

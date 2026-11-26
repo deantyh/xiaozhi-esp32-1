@@ -10,6 +10,13 @@
 #include "led/single_led.h"
 #include "esp32_camera.h"
 
+#if CONFIG_BREAD_COMPACT_WIFI_CAM_POWER_MANAGEMENT
+#include "power_manager.h"
+#include "power_save_timer.h"
+#include <driver/rtc_io.h>
+#include <esp_sleep.h>
+#endif
+
 #include <esp_log.h>
 #include <driver/i2c_master.h>
 #include <esp_lcd_panel_vendor.h>
@@ -68,6 +75,11 @@ private:
     LcdDisplay* display_;
 #endif
     Esp32Camera* camera_;
+
+#if CONFIG_BREAD_COMPACT_WIFI_CAM_POWER_MANAGEMENT
+    PowerManager* power_manager_ = nullptr;
+    PowerSaveTimer* power_save_timer_ = nullptr;
+#endif
 
 #ifndef CONFIG_BREAD_COMPACT_WIFI_CAM_DISABLE_LCD
     void InitializeSpi() {
@@ -158,6 +170,59 @@ private:
         camera_ = new Esp32Camera(config);
     }
 
+#if CONFIG_BREAD_COMPACT_WIFI_CAM_POWER_MANAGEMENT
+    void InitializePowerManager() {
+        power_manager_ = new PowerManager(GPIO_NUM_3);
+        power_manager_->OnChargingStatusChanged([this](bool is_charging) {
+            // 外接供电时常亮；电池供电时允许空闲后自动休眠
+            power_save_timer_->SetEnabled(!is_charging);
+        });
+        power_manager_->OnLowBatteryStatusChanged([](bool is_low) {
+            if (is_low) {
+                ESP_LOGW(TAG, "Low battery detected");
+            }
+        });
+    }
+
+    void InitializePowerSaveTimer() {
+        // 用板载 LED 所在的 RTC GPIO 作为深度睡眠保持引脚
+        rtc_gpio_init(BUILTIN_LED_GPIO);
+        rtc_gpio_set_direction(BUILTIN_LED_GPIO, RTC_GPIO_MODE_OUTPUT_ONLY);
+        rtc_gpio_set_level(BUILTIN_LED_GPIO, 1);
+
+        power_save_timer_ = new PowerSaveTimer(-1, 60, 36000);
+        power_save_timer_->OnEnterSleepMode([this]() {
+            ESP_LOGI(TAG, "Entering power save mode");
+#ifndef CONFIG_BREAD_COMPACT_WIFI_CAM_DISABLE_LCD
+            display_->SetChatMessage("system", "");
+            display_->SetEmotion("sleepy");
+#endif
+            auto backlight = GetBacklight();
+            if (backlight != nullptr) {
+                backlight->SetBrightness(1);
+            }
+        });
+        power_save_timer_->OnExitSleepMode([this]() {
+            ESP_LOGI(TAG, "Exiting power save mode");
+#ifndef CONFIG_BREAD_COMPACT_WIFI_CAM_DISABLE_LCD
+            display_->SetChatMessage("system", "");
+            display_->SetEmotion("neutral");
+#endif
+            auto backlight = GetBacklight();
+            if (backlight != nullptr) {
+                backlight->RestoreBrightness();
+            }
+        });
+        power_save_timer_->OnShutdownRequest([]() {
+            ESP_LOGI(TAG, "Deep sleep requested");
+            rtc_gpio_set_level(BUILTIN_LED_GPIO, 0);
+            rtc_gpio_hold_en(BUILTIN_LED_GPIO);
+            esp_deep_sleep_start();
+        });
+        power_save_timer_->SetEnabled(true);
+    }
+#endif
+
     void InitializeButtons() {
         boot_button_.OnClick([this]() {
             auto& app = Application::GetInstance();
@@ -177,6 +242,10 @@ public:
         InitializeLcdDisplay();
 #endif
         InitializeButtons();
+#if CONFIG_BREAD_COMPACT_WIFI_CAM_POWER_MANAGEMENT
+        InitializePowerSaveTimer();
+        InitializePowerManager();
+#endif
         InitializeCamera();
 #ifndef CONFIG_BREAD_COMPACT_WIFI_CAM_DISABLE_LCD
         if (DISPLAY_BACKLIGHT_PIN != GPIO_NUM_NC) {
@@ -219,6 +288,18 @@ public:
     virtual Camera* GetCamera() override {
         return camera_;
     }
+
+#if CONFIG_BREAD_COMPACT_WIFI_CAM_POWER_MANAGEMENT
+    virtual bool GetBatteryLevel(int& level, bool& charging, bool& discharging) override {
+        if (power_manager_ == nullptr) {
+            return false;
+        }
+        level = power_manager_->GetBatteryLevel();
+        charging = power_manager_->IsCharging();
+        discharging = power_manager_->IsDischarging();
+        return true;
+    }
+#endif
 };
 
 DECLARE_BOARD(CompactWifiBoardS3Cam);
