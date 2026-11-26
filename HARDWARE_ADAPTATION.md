@@ -1,5 +1,12 @@
 # 硬件适配说明（v2.6.0-s3cam240x320-dl.1）
 
+## 已构建固件产物
+本次定制固件已通过 GitHub Actions 云端构建成功，产物位于：
+- `releases/v2.6.0_bread-compact-wifi-s3cam-240x320-dl_merged.bin`（9.65 MB，单文件合并固件，烧录到 `0x0`）
+- `releases/v2.6.0_bread-compact-wifi-s3cam-240x320-dl.zip`（2.52 MB，完整发布包，内含 `merged-binary.bin`）
+- 同样存放在工作区 `firmware-v2.6.0/` 目录，两处 MD5 一致。
+- 云端构建记录：Fork `deantyh/xiaozhi-esp32-1` 的 run `45751129963`（success）。
+
 ## 目标硬件
 - 主控：ESP32-S3（面包板 ESP32-S3-CAM）
 - 屏幕：ST7789 SPI LCD，240×320，背光 GPIO38
