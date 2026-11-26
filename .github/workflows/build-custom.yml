@@ -1,0 +1,42 @@
+name: Build Custom S3CAM 240x320 DL
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build bread-compact-wifi-s3cam-240x320-dl
+    runs-on: ubuntu-latest
+    container:
+      image: espressif/idf:release-v6.1
+    steps:
+      - name: Checkout custom hardware branch
+        uses: actions/checkout@v7
+        with:
+          ref: hw/esp32s3cam-240x320-v2.6.0
+          fetch-depth: 0
+
+      - name: Build firmware
+        shell: bash
+        run: |
+          source "$IDF_PATH/export.sh"
+          python scripts/build.py bread-compact-wifi-s3cam \
+            --name bread-compact-wifi-s3cam-240x320-dl \
+            --language zh-CN --wake-word nihaoxiaozhi --zip
+
+      - name: Upload merged binary
+        uses: actions/upload-artifact@v7
+        with:
+          name: xiaozhi-s3cam-240x320-dl-merged
+          path: build/merged-binary.bin
+          if-no-files-found: error
+
+      - name: Upload release zip
+        uses: actions/upload-artifact@v7
+        with:
+          name: xiaozhi-s3cam-240x320-dl-zip
+          path: releases/*.zip
+          if-no-files-found: error
