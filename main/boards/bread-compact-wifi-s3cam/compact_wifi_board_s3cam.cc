@@ -162,12 +162,24 @@ private:
         config.pin_reset = CAMERA_PIN_RESET;
         config.xclk_freq_hz = XCLK_FREQ_HZ;
         config.pixel_format = PIXFORMAT_RGB565;
+#if CONFIG_BREAD_COMPACT_WIFI_CAM_CAMERA_FIXES
+        // QVGA (320x240) matches this board's OV sensor and 240x320 panel,
+        // producing a larger, correctly framed preview.
+        config.frame_size = FRAMESIZE_QVGA;
+#else
         config.frame_size = FRAMESIZE_VGA;
+#endif
         config.jpeg_quality = 12;
         config.fb_count = 1;
         config.fb_location = CAMERA_FB_IN_PSRAM;
         config.grab_mode = CAMERA_GRAB_WHEN_EMPTY;
         camera_ = new Esp32Camera(config);
+#if CONFIG_BREAD_COMPACT_WIFI_CAM_CAMERA_FIXES
+        // This board's OV sensor outputs RGB565 in an order that, after the
+        // driver's default byte swap, renders as a negative/inverted preview.
+        // Disable the swap to restore natural colors.
+        camera_->SetSwapBytes(false);
+#endif
     }
 
 #if CONFIG_BREAD_COMPACT_WIFI_CAM_POWER_MANAGEMENT
