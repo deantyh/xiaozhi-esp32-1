@@ -831,6 +831,15 @@ config BREAD_COMPACT_WIFI_CAM_POWER_MANAGEMENT
         support used by the battery-powered breadboard ESP32-S3-CAM kit.
         Keep it disabled when the board is powered from USB continuously.
 
+config BREAD_COMPACT_WIFI_CAM_CAMERA_FIXES
+    bool "Fix camera preview colors and enlarge preview (this board's OV sensor)"
+    depends on BOARD_TYPE_BREAD_COMPACT_WIFI_CAM
+    default n
+    help
+        Disable RGB565 byte swapping to fix inverted/negative-looking preview
+        colors, use QVGA (320x240) to match the panel, and scale the capture
+        preview up to nearly fill the screen instead of the default small box.
+
 choice DISPLAY_LCD_TYPE
     depends on BOARD_TYPE_BREAD_COMPACT_WIFI_LCD || BOARD_TYPE_BREAD_COMPACT_ESP32_LCD || BOARD_TYPE_WDMOMO_CGC || BOARD_TYPE_BREAD_COMPACT_WIFI_CAM || (BOARD_TYPE_WK_ESP32S3_DEV && WK_ESP32S3_DEV_DISPLAY_LCD)
     prompt "LCD Type"
