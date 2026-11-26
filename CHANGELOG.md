@@ -14,6 +14,7 @@
   - 新增 Kconfig 选项 `CONFIG_BREAD_COMPACT_WIFI_CAM_POWER_MANAGEMENT`，默认关闭，仅在定制变体中开启。
   - 空闲 60 秒进入低功耗显示、36000 秒（10 小时）请求深度睡眠；外接供电时自动关闭休眠。
   - 实现 `GetBatteryLevel()`，使天气/电量查询和 MCP `self.get_device_status` 能读到真实电量。
+- 新增云端构建工作流 `.github/workflows/build-custom.yml`，仅编译 `bread-compact-wifi-s3cam-240x320-dl` 变体，作为本地编译之外的并行产物来源。
 
 ### 修改 / Changed
 - `main/boards/bread-compact-wifi-s3cam/compact_wifi_board_s3cam.cc`
