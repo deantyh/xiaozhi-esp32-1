@@ -20,7 +20,8 @@
             },
             "sdkconfig_append": [
                 "CONFIG_LCD_ST7789_240X320=y",
-                "CONFIG_BREAD_COMPACT_WIFI_CAM_POWER_MANAGEMENT=y"
+                "CONFIG_BREAD_COMPACT_WIFI_CAM_POWER_MANAGEMENT=y",
+                "CONFIG_BREAD_COMPACT_WIFI_CAM_CAMERA_FIXES=y"
             ]
         }
     ]
